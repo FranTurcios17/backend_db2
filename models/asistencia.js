@@ -26,7 +26,8 @@ module.exports = function(sequelize, DataTypes) {
     hora_salida: {
       type: DataTypes.TIME,
       allowNull: true
-    },
+    }
+    /*,
     id_horario: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -34,7 +35,7 @@ module.exports = function(sequelize, DataTypes) {
         model: 'horarios',
         key: 'id_horario'
       }
-    }
+    }*/
   }, {
     sequelize,
     tableName: 'asistencia',
@@ -54,14 +55,14 @@ module.exports = function(sequelize, DataTypes) {
         fields: [
           { name: "id_empleado" },
         ]
-      },
+      },/*
       {
         name: "id_horario",
         using: "BTREE",
         fields: [
           { name: "id_horario" },
         ]
-      },
+      },*/
     ]
   });
 };

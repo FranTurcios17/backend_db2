@@ -1,15 +1,17 @@
 const db = require("../../models/index")
 //import empleados from "../../models/empleados";
 //import { empleados } from "../../models/index";
-//import { encryptPassword} from "../services/userServices";
+const crypt = require("../services/userServices")
 
 const createEmpleado = async (req, res) =>{
+    const trs = await db.sequelize.transaction()
     try {
-        
-        const trs = await db.sequelize.transaction()
-        const {nombre, apellido, dni, sexo, telefono, telefono_emergencia, email, fecha_contratacion, rol} = req.body;
+      
+        const {nombre, apellido, dni, sexo, telefono, telefono_emergencia, email, fecha_contratacion, rol, id_horario
+        } = req.body;
+
     
-        const empleado = await db.empleados.create({nombre, apellido, dni, sexo, telefono, telefono_emergencia, email, fecha_contratacion,usuario, contrasena, rol}, {transaction: trs})
+        const empleado = await db.empleados.create({nombre, apellido, DNI: dni, sexo, telefono, telefono_emergencia, email, fecha_contratacion, activo: true, id_horario}, {transaction: trs})
 
         if(!empleado){
             await trs.rollback()
@@ -18,10 +20,11 @@ const createEmpleado = async (req, res) =>{
         }
 
         const nombre_usuario = dni;
-        const contrasena = process.env.DEFAULT_PASSWORD || 123456;
-        const contrasena_hash = await encryptPassword(contrasena)
         
-        const user = await db.usuarios.create({nombre_usuario, contrasena_hash, rol}, {transaction: trs})
+        const contrasena = process.env.DEFAULT_PASSWORD || 123456;
+        const contraseña_hash = await crypt.encryptPassword(contrasena)
+        
+        const user = await db.usuarios.create({id_empleado: empleado.id_empleado, nombre_usuario, contraseña_hash, rol}, {transaction: trs})
 
         if(!user){
             await trs.rollback()
@@ -29,11 +32,17 @@ const createEmpleado = async (req, res) =>{
             return res.status(404).json({error: 'hubo un error al guardar la informacion del usuario'});
         }
 
+        
+
         await trs.commit();
-        res.status(200).json(empleado)
+        res.status(200).json({
+            message: "Empleado registrado con exito", 
+            info_empleado: empleado 
+        })
 
     } catch (error) {
-        console.log("no se pudo registrar el empleado")   
+        trs.rollback()
+        console.log("no se pudo registrar el empleado", error)   
         res.status(500).json({error: 'error en el servidor'}) 
     }
         
@@ -43,16 +52,10 @@ const createEmpleado = async (req, res) =>{
 const getEmpleados = async (req, res) => {
    
     try {
-        const empleados = await db.empleados.findAll();
-
-        if(!empleados){
-            console.log("no se pudieron obtener los empleados")
-            return res.status(404).json({error: 'no se pudieron cargar los empleados'});
-        }
-        res.status(200).json(empleados)
+        const empleados = await db.empleados.findAll({ include: { model: db.horarios, as:  "horario"}});
+        res.status(200).json(empleados);
     } catch (error) {
-        console.log("error al encontrar los usuarios")
-        res.status(500).json({error: 'error en el servidor'})
+        res.status(500).json({ message: 'Error al obtener empleados', error });
     }
     
 }
@@ -61,13 +64,13 @@ const getEmpleadoById = async(req, res) =>{
     const id = req.params.id;
 
     try {
-        const empleado = await db.empleados.findByPk(id);
+        const empleado = await db.empleados.findByPk(id, {include: {model: db.horarios, as:  "id_horario_horario"}});
 
         if(!empleado){
             console.log("no se pudo obtener el empleado")
             return res.status(404).json({error: 'el empleado no existe'});
         }
-        res.status(200).json(empleados)
+        res.status(200).json(empleado)
     } catch (error) {
         console.log("error al encontrar los usuarios get by id")
         res.status(500).json({error: 'error en el servidor'})
@@ -75,5 +78,24 @@ const getEmpleadoById = async(req, res) =>{
 }
 
 
+const updateEmpleados = async (req, res) =>{
+    const id = req.params.id;
 
-module.exports = {createEmpleado, getEmpleados, getEmpleadoById};
+    try {
+
+        console.log(id)
+        
+        const empleado = await db.empleados.findByPk(id);
+        if (!empleado) {
+            return res.status(404).json({ message: 'el empleado no existe' });
+        }
+
+        await empleado.update(req.body);
+        res.json({ message: 'Empleado actualizado con éxito', empleado });
+    } catch (error) {
+        res.status(500).json({ message: 'Error al actualizar empleado'});
+    }
+}
+
+
+module.exports = {createEmpleado, getEmpleados, getEmpleadoById, updateEmpleados};

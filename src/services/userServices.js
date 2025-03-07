@@ -1,4 +1,6 @@
-const bcrypt = require('bcryptjs')
+//const bcrypt = require('bcryptjs')
+
+const bcrypt = require('bcryptjs');
 
 const encryptPassword = async (password) =>{
 
@@ -7,7 +9,7 @@ const encryptPassword = async (password) =>{
 }
 
 const comparePassword = async (pass1, pass2) =>{
-    const result = bcrypt.compare(pass1, pass2)
+    const result = await bcrypt.compare(pass1, pass2)
     return result
 }
 

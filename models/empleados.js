@@ -32,7 +32,7 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(15),
       allowNull: true
     },
-    'teléfono_emergencia': {
+    telefono_emergencia: {
       type: DataTypes.STRING(15),
       allowNull: true
     },
@@ -44,6 +44,14 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.BOOLEAN,
       allowNull: true,
       defaultValue: 1
+    },
+    id_horario: {
+      type: DataTypes.INTEGER,
+      allowNull: false, 
+      references: {
+        model: 'horarios',
+        key: 'id_horario'
+      }
     }
   }, {
     sequelize,

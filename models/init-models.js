@@ -16,16 +16,18 @@ function initModels(sequelize) {
   var permisos = _permisos(sequelize, DataTypes);
   var usuarios = _usuarios(sequelize, DataTypes);
 
-  asistencia.belongsTo(empleados, { as: "id_empleado_empleado", foreignKey: "id_empleado"});
+  asistencia.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
   empleados.hasMany(asistencia, { as: "asistencia", foreignKey: "id_empleado"});
-  horasextras.belongsTo(empleados, { as: "id_empleado_empleado", foreignKey: "id_empleado"});
+  horasextras.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
   empleados.hasMany(horasextras, { as: "horasextras", foreignKey: "id_empleado"});
-  incapacidades.belongsTo(empleados, { as: "id_empleado_empleado", foreignKey: "id_empleado"});
+  incapacidades.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
   empleados.hasMany(incapacidades, { as: "incapacidades", foreignKey: "id_empleado"});
-  permisos.belongsTo(empleados, { as: "id_empleado_empleado", foreignKey: "id_empleado"});
+  permisos.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
   empleados.hasMany(permisos, { as: "permisos", foreignKey: "id_empleado"});
-  asistencia.belongsTo(horarios, { as: "id_horario_horario", foreignKey: "id_horario"});
-  horarios.hasMany(asistencia, { as: "asistencia", foreignKey: "id_horario"});
+  //asistencia.belongsTo(horarios, { as: "id_horario_horario", foreignKey: "id_horario"});
+  //horarios.hasMany(asistencia, { as: "asistencia", foreignKey: "id_horario"});
+  empleados.belongsTo(horarios, {as: "horario", foreignKey: "id_horario"});
+  horarios.hasMany(empleados, {as: "empleados", foreignKey: "id_horario"})
 
   return {
     asistencia,

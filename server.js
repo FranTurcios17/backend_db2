@@ -3,6 +3,7 @@ const app = express();
 const parser = require('body-parser');
 const dotenv = require('dotenv');
 dotenv.config()
+const cors = require('cors')
 const db = require('./models');
 const empleadosRoutes = require("./src/routes/empleadosRoutes")
 const asistenciaRoutes = require("./src/routes/asistenciaRoutes")
@@ -12,7 +13,7 @@ const usuariosRoutes = require("./src/routes/usuariosRoutes")
 
 const PORT = process.env.PORT || 3000;
 app.use(parser.json());
-
+app.use(cors())
 
 
 app.use("/empleados", empleadosRoutes)

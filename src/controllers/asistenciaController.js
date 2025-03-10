@@ -5,7 +5,7 @@ const db = require("../../models/index")
 //import { encryptPassword} from "../services/userServices";
 
 const createEntrada = async (req, res) =>{
-    const { dni, hora_entrada, fecha } = req.body;
+    const { dni, hora, fecha } = req.body;
     try {
         
         const empleado = await db.empleados.findOne({where: {DNI: dni}})
@@ -17,7 +17,7 @@ const createEntrada = async (req, res) =>{
         const asistencia = await db.asistencia.create({
             id_empleado: empleado.id_empleado,
             fecha,
-            hora_entrada,
+            hora_entrada: hora,
             hora_salida: null 
         });
 
@@ -30,7 +30,7 @@ const createEntrada = async (req, res) =>{
 }
 
 const createSalida = async (req, res) =>{
-    const { dni, hora_salida, fecha } = req.body;
+    const { dni, hora, fecha } = req.body;
     try {
         const empleado = await db.empleados.findOne({where: {DNI: dni}})
 
@@ -45,7 +45,7 @@ const createSalida = async (req, res) =>{
         }
 
         //asistencia.hora_salida = hora_salida;
-        await asistido.update({hora_salida});
+        await asistido.update({hora_salida: hora});
 
         res.json({ message: 'Salida registrada con éxito', asistido });
     } catch (error) {

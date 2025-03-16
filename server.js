@@ -9,7 +9,9 @@ const empleadosRoutes = require("./src/routes/empleadosRoutes")
 const asistenciaRoutes = require("./src/routes/asistenciaRoutes")
 const horariosRoutes = require("./src/routes/horarioRoutes")
 const usuariosRoutes = require("./src/routes/usuariosRoutes")
-
+const permisoRoutes = require("./src/routes/permisoRoutes")
+const horasExtrasRoutes = require("./src/routes/horasExtrasRoutes");
+const incapacidadesRoutes = require("./src/routes/incapacidadesRoutes");
 
 const PORT = process.env.PORT || 3000;
 app.use(parser.json());
@@ -21,11 +23,13 @@ app.use(cors({
     allowedHeaders: "Content-Type,Authorization",
 }))
 
-
 app.use("/empleados", empleadosRoutes)
 app.use("/asistencia", asistenciaRoutes)
 app.use("/horarios", horariosRoutes)
 app.use("/usuarios", usuariosRoutes)
+app.use("/permisos", permisoRoutes)
+app.use("/horasextras", horasExtrasRoutes);
+app.use("/incapacidades", incapacidadesRoutes);
 //console.log(process.env.DBNAME)
 
 app.listen(PORT, async() =>

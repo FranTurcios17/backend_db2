@@ -12,6 +12,7 @@ const usuariosRoutes = require("./src/routes/usuariosRoutes")
 const permisoRoutes = require("./src/routes/permisoRoutes")
 const horasExtrasRoutes = require("./src/routes/horasExtrasRoutes");
 const incapacidadesRoutes = require("./src/routes/incapacidadesRoutes");
+const nominasRoutes = require("./src/routes/nominasRoutes");
 
 const PORT = process.env.PORT || 3000;
 app.use(parser.json());
@@ -30,6 +31,7 @@ app.use("/usuarios", usuariosRoutes)
 app.use("/permisos", permisoRoutes)
 app.use("/horasextras", horasExtrasRoutes);
 app.use("/incapacidades", incapacidadesRoutes);
+app.use("/nominas", nominasRoutes);
 //console.log(process.env.DBNAME)
 
 app.listen(PORT, async() =>

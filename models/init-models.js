@@ -6,6 +6,7 @@ var _horasextras = require("./horasextras");
 var _incapacidades = require("./incapacidades");
 var _permisos = require("./permisos");
 var _usuarios = require("./usuarios");
+var _nominas = require("./nominas");
 
 function initModels(sequelize) {
   var asistencia = _asistencia(sequelize, DataTypes);
@@ -15,6 +16,7 @@ function initModels(sequelize) {
   var incapacidades = _incapacidades(sequelize, DataTypes);
   var permisos = _permisos(sequelize, DataTypes);
   var usuarios = _usuarios(sequelize, DataTypes);
+  var nominas = _nominas(sequelize, DataTypes);
 
   asistencia.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
   empleados.hasMany(asistencia, { as: "asistencia", foreignKey: "id_empleado"});
@@ -24,8 +26,8 @@ function initModels(sequelize) {
   empleados.hasMany(incapacidades, { as: "incapacidades", foreignKey: "id_empleado"});
   permisos.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
   empleados.hasMany(permisos, { as: "permisos", foreignKey: "id_empleado"});
-  //asistencia.belongsTo(horarios, { as: "id_horario_horario", foreignKey: "id_horario"});
-  //horarios.hasMany(asistencia, { as: "asistencia", foreignKey: "id_horario"});
+  nominas.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
+  empleados.hasMany(nominas, { as: "nominas", foreignKey: "id_empleado"});
   empleados.belongsTo(horarios, {as: "horario", foreignKey: "id_horario"});
   horarios.hasMany(empleados, {as: "empleados", foreignKey: "id_horario"})
 
@@ -37,6 +39,7 @@ function initModels(sequelize) {
     incapacidades,
     permisos,
     usuarios,
+    nominas,
   };
 }
 module.exports = initModels;

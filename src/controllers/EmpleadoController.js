@@ -52,7 +52,7 @@ const createEmpleado = async (req, res) =>{
 const getEmpleados = async (req, res) => {
    
     try {
-        const empleados = await db.empleados.findAll({ include: { model: db.horarios, as:  "horario"}});
+        const empleados = await db.empleados.findAll();
         res.status(200).json(empleados);
     } catch (error) {
         res.status(500).json({ message: 'Error al obtener empleados', error });
@@ -64,7 +64,7 @@ const getEmpleadoById = async(req, res) =>{
     const id = req.params.id;
 
     try {
-        const empleado = await db.empleados.findByPk(id, {include: {model: db.horarios, as:  "id_horario_horario"}});
+        const empleado = await db.empleados.findByPk(id);
 
         if(!empleado){
             console.log("no se pudo obtener el empleado")

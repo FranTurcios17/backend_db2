@@ -50,7 +50,7 @@ module.exports = function(sequelize, DataTypes) {
     fecha_generacion: {
       type: DataTypes.DATEONLY,
       allowNull: false,
-      defaultValue: Sequelize.literal('CURRENT_DATE')
+      defaultValue: DataTypes.NOW
     }
   }, {
     sequelize,

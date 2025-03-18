@@ -6,7 +6,7 @@ const {createEmpleado, getEmpleados, getEmpleadoById, updateEmpleados} = control
 
 router.get("/", getEmpleados)
 router.post("/", createEmpleado)
-router.post("/:id", getEmpleadoById)
+router.get("/:id", getEmpleadoById)
 router.put("/:id", updateEmpleados)
 
 module.exports = router;

@@ -70,9 +70,27 @@ const getAsistencias = async (req, res) => {
 const getAsistenciaPorEmpleado = async (req, res) =>{
     try {
         const id = req.params.id;
-        const asistencias = await db.asistencia.findAll({where: {id_empleado: id}});
+        
+        // Get the start and end dates if provided as query parameters
+        const { fechaInicio, fechaFin } = req.query;
+        
+        // Build the where clause
+        const whereClause = { id_empleado: id };
+        
+        if (fechaInicio && fechaFin) {
+            whereClause.fecha = {
+                [db.Sequelize.Op.between]: [fechaInicio, fechaFin]
+            };
+        }
+        
+        const asistencias = await db.asistencia.findAll({
+            where: whereClause,
+            order: [['fecha', 'DESC']]
+        });
+        
         res.status(200).json(asistencias);
     } catch (error) {
+        console.error('Error al obtener asistencias:', error);
         res.status(500).json({ message: 'Error al obtener el registro de asistencia', error });
     }
 }

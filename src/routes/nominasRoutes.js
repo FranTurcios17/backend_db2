@@ -2,20 +2,16 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/NominaController');
 
-const {
-    createNomina,
-    getNominas,
-    getNominaById,
-    getNominasByEmpleado,
-    getNominasByPeriodo,
-    updateNomina
-} = controller;
+// Get all payrolls (with pagination and optional filtering)
+router.get("/", controller.getNominas);
 
-router.get('/', getNominas);
-router.post('/', createNomina);
-router.get('/:id', getNominaById);
-router.get('/empleado/:id', getNominasByEmpleado);
-router.get('/periodo/:periodo', getNominasByPeriodo);
-router.put('/:id', updateNomina);
+// Get specific payroll by ID
+router.get("/:id", controller.getNominaById);
+
+// Get payrolls for a specific employee
+router.get("/empleado/:id", controller.getNominasByEmpleado);
+
+// Create a new payroll
+router.post("/", controller.createNomina);
 
 module.exports = router;

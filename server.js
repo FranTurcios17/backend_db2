@@ -36,6 +36,7 @@ app.use("/permisos", verifyToken, permisoRoutes);
 app.use("/horasextras", verifyToken, horasExtrasRoutes);
 app.use("/incapacidades", verifyToken, incapacidadesRoutes);
 app.use("/nominas", verifyToken, nominasRoutes);
+app.use('/nominas', require('./src/routes/nominasRoutes'));
 //console.log(process.env.DBNAME)
 
 app.listen(PORT, async() =>

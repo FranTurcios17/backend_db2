@@ -29,7 +29,9 @@ function initModels(sequelize) {
   nominas.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
   empleados.hasMany(nominas, { as: "nominas", foreignKey: "id_empleado"});
   empleados.belongsTo(horarios, {as: "horario", foreignKey: "id_horario"});
-  horarios.hasMany(empleados, {as: "empleados", foreignKey: "id_horario"})
+  horarios.hasMany(empleados, {as: "empleados", foreignKey: "id_horario"});
+  empleados.hasOne(usuarios, { as: "usuario", foreignKey: "id_empleado"});
+  usuarios.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
 
   return {
     asistencia,

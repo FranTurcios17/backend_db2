@@ -1,101 +1,151 @@
-const db = require("../../models/index")
+const db = require("../../models/index");
 //import empleados from "../../models/empleados";
 //import { empleados } from "../../models/index";
-const crypt = require("../services/userServices")
+const crypt = require("../services/userServices");
 
-const createEmpleado = async (req, res) =>{
-    const trs = await db.sequelize.transaction()
-    try {
-      
-        const {nombre, apellido, dni, sexo, telefono, telefono_emergencia, email, fecha_contratacion, rol, id_horario
-        } = req.body;
+const createEmpleado = async (req, res) => {
+  const trs = await db.sequelize.transaction();
+  try {
+    const {
+      nombre,
+      apellido,
+      dni,
+      sexo,
+      telefono,
+      telefono_emergencia,
+      email,
+      fecha_contratacion,
+      rol,
+      id_horario,
+      salario = 0.0,
+    } = req.body;
 
-    
-        const empleado = await db.empleados.create({nombre, apellido, DNI: dni, sexo, telefono, telefono_emergencia, email, fecha_contratacion, activo: true, id_horario}, {transaction: trs})
+    const empleado = await db.empleados.create(
+      {
+        nombre,
+        apellido,
+        DNI: dni,
+        sexo,
+        telefono,
+        telefono_emergencia,
+        email,
+        fecha_contratacion,
+        salario,
+        activo: true,
+        id_horario,
+      },
+      { transaction: trs }
+    );
 
-        if(!empleado){
-            await trs.rollback()
-            console.log("hubo un error al guardar la informacion del empleado")
-            return res.status(404).json({error: 'hubo un error al guardar la informacion del empleado'});
-        }
-
-        const nombre_usuario = dni;
-        
-        const contrasena = process.env.DEFAULT_PASSWORD || 123456;
-        const contraseña_hash = await crypt.encryptPassword(contrasena)
-        
-        const user = await db.usuarios.create({id_empleado: empleado.id_empleado, nombre_usuario, contraseña_hash, rol}, {transaction: trs})
-
-        if(!user){
-            await trs.rollback()
-            console.log("hubo un error al guardar la informacion del usuario")
-            return res.status(404).json({error: 'hubo un error al guardar la informacion del usuario'});
-        }
-
-        
-
-        await trs.commit();
-        res.status(200).json({
-            message: "Empleado registrado con exito", 
-            info_empleado: empleado 
-        })
-
-    } catch (error) {
-        trs.rollback()
-        console.log("no se pudo registrar el empleado", error)   
-        res.status(500).json({error: 'error en el servidor'}) 
+    if (!empleado) {
+      await trs.rollback();
+      console.log("hubo un error al guardar la informacion del empleado");
+      return res
+        .status(404)
+        .json({
+          error: "hubo un error al guardar la informacion del empleado",
+        });
     }
-        
 
-}
+    const nombre_usuario = dni;
+
+    const contrasena = process.env.DEFAULT_PASSWORD || 123456;
+    const contraseña_hash = await crypt.encryptPassword(contrasena);
+
+    const user = await db.usuarios.create(
+      {
+        id_empleado: empleado.id_empleado,
+        nombre_usuario,
+        contraseña_hash,
+        rol,
+      },
+      { transaction: trs }
+    );
+
+    if (!user) {
+      await trs.rollback();
+      console.log("hubo un error al guardar la informacion del usuario");
+      return res
+        .status(404)
+        .json({ error: "hubo un error al guardar la informacion del usuario" });
+    }
+
+    await trs.commit();
+    res.status(200).json({
+      message: "Empleado registrado con exito",
+      info_empleado: empleado,
+    });
+  } catch (error) {
+    trs.rollback();
+    console.log("no se pudo registrar el empleado", error);
+    res.status(500).json({ error: "error en el servidor" });
+  }
+};
 
 const getEmpleados = async (req, res) => {
-   
-    try {
-        const empleados = await db.empleados.findAll();
-        res.status(200).json(empleados);
-    } catch (error) {
-        res.status(500).json({ message: 'Error al obtener empleados', error });
+  try {
+    const empleados = await db.empleados.findAll({
+      include: [
+        {
+          model: db.usuarios,
+          as: "usuario",
+          attributes: ["rol"], // Solo necesitamos el rol
+        },
+      ],
+    });
+
+    // Formatear la respuesta para incluir el rol
+    const formattedEmpleados = empleados.map((emp) => {
+      const empleadoData = emp.get({ plain: true });
+      return {
+        ...empleadoData,
+        rol: empleadoData.usuario ? empleadoData.usuario.rol : "Sin rol",
+      };
+    });
+
+    res.status(200).json(formattedEmpleados);
+  } catch (error) {
+    res.status(500).json({ message: "Error al obtener empleados", error });
+  }
+};
+
+const getEmpleadoById = async (req, res) => {
+  const id = req.params.id;
+
+  try {
+    const empleado = await db.empleados.findByPk(id);
+
+    if (!empleado) {
+      console.log("no se pudo obtener el empleado");
+      return res.status(404).json({ error: "el empleado no existe" });
     }
-    
-}
+    res.status(200).json(empleado);
+  } catch (error) {
+    console.log("error al encontrar los usuarios get by id");
+    res.status(500).json({ error: "error en el servidor" });
+  }
+};
 
-const getEmpleadoById = async(req, res) =>{
-    const id = req.params.id;
+const updateEmpleados = async (req, res) => {
+  const id = req.params.id;
 
-    try {
-        const empleado = await db.empleados.findByPk(id);
+  try {
+    console.log(id);
 
-        if(!empleado){
-            console.log("no se pudo obtener el empleado")
-            return res.status(404).json({error: 'el empleado no existe'});
-        }
-        res.status(200).json(empleado)
-    } catch (error) {
-        console.log("error al encontrar los usuarios get by id")
-        res.status(500).json({error: 'error en el servidor'})
+    const empleado = await db.empleados.findByPk(id);
+    if (!empleado) {
+      return res.status(404).json({ message: "el empleado no existe" });
     }
-}
 
-
-const updateEmpleados = async (req, res) =>{
-    const id = req.params.id;
-
-    try {
-
-        console.log(id)
-        
-        const empleado = await db.empleados.findByPk(id);
-        if (!empleado) {
-            return res.status(404).json({ message: 'el empleado no existe' });
-        }
-
-        await empleado.update(req.body);
-        res.json({ message: 'Empleado actualizado con éxito', empleado });
-    } catch (error) {
-        res.status(500).json({ message: 'Error al actualizar empleado'});
-    }
-}
-
-
-module.exports = {createEmpleado, getEmpleados, getEmpleadoById, updateEmpleados};
+    await empleado.update(req.body);
+    res.json({ message: "Empleado actualizado con éxito", empleado });
+  } catch (error) {
+    res.status(500).json({ message: "Error al actualizar empleado" });
+  }
+};
+module.exports = {
+  createEmpleado,
+  getEmpleados,
+  getEmpleadoById,
+  updateEmpleados,
+};

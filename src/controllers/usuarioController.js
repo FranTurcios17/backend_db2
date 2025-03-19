@@ -24,7 +24,6 @@ const loginUser = async (req, res) =>{
             rol: usuario.rol,
             id_empleado: usuario.id_empleado
         }, process.env.JWTPASSWORD, {expiresIn: '24h'})
-
         return res.status(200).json({message: "Inicio de sesion exitoso", token, usuario: {
             id_usuario: usuario.id_usuario,
             rol: usuario.rol,

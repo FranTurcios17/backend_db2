@@ -56,8 +56,7 @@ const createSalida = async (req, res) =>{
 
 }
 
-const getAsistencias = async (req, res) => {
-   
+const getAsistencias = async (req, res) => {   
     try {
         const asistencias = await db.asistencia.findAll({include: {model: db.empleados, as: "empleado"}});
         res.status(200).json(asistencias);
@@ -78,7 +77,7 @@ const getAsistenciaPorEmpleado = async (req, res) =>{
     }
 }
 
-const updateAsistencia = async (res, req) =>{
+const updateAsistencia = async (req, res) =>{
     try {
 
         const id = req.params.id;

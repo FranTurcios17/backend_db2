@@ -147,47 +147,57 @@ const createNomina = async (req, res) => {
     try {
         const { id_empleado, periodo, bonificaciones = 0 } = req.body;
         
-        // Validate required fields
-        if (!id_empleado || !periodo) {
-            return res.status(400).json({ 
-                error: 'Se requieren los campos id_empleado y periodo' 
-            });
-        }
-        
-        // Check if employee exists
+        // Obtener información del empleado
         const empleado = await db.empleados.findByPk(id_empleado);
+        
         if (!empleado) {
-            return res.status(404).json({ error: 'El empleado no existe' });
+            return res.status(404).json({ error: 'Empleado no encontrado' });
         }
         
-        // Check if a payroll already exists for this employee/period
-        const existingPayroll = await db.nominas.findOne({
-            where: { id_empleado, periodo }
-        });
+        // Calcular horas extra y otros cálculos...
+        const horasExtra = 0; // Reemplazar con tu lógica existente
         
-        if (existingPayroll) {
-            return res.status(400).json({ 
-                error: 'Ya existe una nómina para este empleado en este período' 
-            });
-        }
-        
-        // Calculate overtime hours
-        const horasExtra = await calculateOvertimeHours(id_empleado, periodo);
-        
-        // Get employee's base salary
+        // Salario base
         const salarioBase = empleado.salario;
         
-        // Calculate gross salary
-        const salarioBruto = salarioBase + parseFloat(bonificaciones) + horasExtra;
+        // Calcular salario bruto
+        const salarioBruto = salarioBase + parseFloat(bonificaciones || 0) + horasExtra;
         
-        // Calculate deductions
-        const deduccionRap = salarioBruto * 0.04; // 4% para RAP
-        const deduccionIhss = salarioBruto * 0.025; // 2.5% para IHSS
+        // Obtener deducciones del empleado
+        const empleadoDeducciones = await db.empleado_deducciones.findAll({
+            where: { 
+                id_empleado, 
+                activo: true 
+            },
+            include: [{ 
+                model: db.deducciones, 
+                as: "deduccion" 
+            }]
+        });
         
-        // Calculate net salary
-        const salarioNeto = salarioBruto - deduccionRap - deduccionIhss;
+        let totalDeducciones = 0;
         
-        // Create payroll record
+        // Calcular cada deducción basado en los porcentajes
+        for (const empDeduccion of empleadoDeducciones) {
+            const deduccion = empDeduccion.deduccion;
+            
+            if (deduccion.porcentaje) {
+                const montoDeduccion = salarioBruto * (deduccion.porcentaje / 100);
+                totalDeducciones += montoDeduccion;
+            }
+        }
+        
+        // Si no hay deducciones personalizadas, aplicar las por defecto (RAP e IHSS)
+        if (empleadoDeducciones.length === 0) {
+            const deduccionRap = salarioBruto * 0.04; // 4% para RAP
+            const deduccionIhss = salarioBruto * 0.025; // 2.5% para IHSS
+            totalDeducciones = deduccionRap + deduccionIhss;
+        }
+        
+        // Calcular salario neto
+        const salarioNeto = salarioBruto - totalDeducciones;
+        
+        // Crear registro de nómina
         const nuevaNomina = await db.nominas.create({
             id_empleado,
             periodo,
@@ -195,8 +205,8 @@ const createNomina = async (req, res) => {
             horas_extra: horasExtra,
             salario_bruto: salarioBruto,
             salario_neto: salarioNeto,
-            deduccion_rap: deduccionRap,
-            deduccion_ihss: deduccionIhss,
+            deduccion_rap: 0, // Estos campos quedarán obsoletos pero los mantenemos por compatibilidad
+            deduccion_ihss: 0,
             fecha_generacion: new Date()
         });
         

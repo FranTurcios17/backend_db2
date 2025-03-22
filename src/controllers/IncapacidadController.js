@@ -4,7 +4,6 @@ const createIncapacidad = async (req, res) => {
     try {
         const { id_empleado,  fecha_inicio, fecha_fin, motivo, archivo_adjunto, esatdo } = req.body;
         
-        // Validate employee exists
         const empleado = await db.empleados.findByPk(id_empleado);
         if (!empleado) {
             return res.status(404).json({ error: 'El empleado no existe' });
@@ -65,7 +64,6 @@ const getIncapacidadesByEmpleado = async (req, res) => {
     try {
         const id_empleado = req.params.id;
         
-        // Validate employee exists
         const empleado = await db.empleados.findByPk(id_empleado);
         if (!empleado) {
             return res.status(404).json({ error: 'El empleado no existe' });

@@ -1,14 +1,12 @@
 const db = require('../../models');
 const { Op } = require('sequelize');
 
-// Get all payrolls with pagination (Admin view)
 const getNominas = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
         
-        // Filter by employee ID if provided
         const where = {};
         if (req.query.id_empleado) {
             where.id_empleado = req.query.id_empleado;
@@ -34,7 +32,6 @@ const getNominas = async (req, res) => {
     }
 };
 
-// Get payroll by ID
 const getNominaById = async (req, res) => {
     try {
         const id = req.params.id;
@@ -53,7 +50,6 @@ const getNominaById = async (req, res) => {
     }
 };
 
-// Get payrolls for specific employee
 const getNominasByEmpleado = async (req, res) => {
     try {
         const id_empleado = req.params.id;
@@ -61,7 +57,6 @@ const getNominasByEmpleado = async (req, res) => {
         const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
         
-        // Validate employee exists
         const empleado = await db.empleados.findByPk(id_empleado);
         if (!empleado) {
             return res.status(404).json({ error: 'El empleado no existe' });
@@ -86,13 +81,10 @@ const getNominasByEmpleado = async (req, res) => {
     }
 };
 
-// Helper function to calculate overtime from attendance
 const calculateOvertimeHours = async (id_empleado, periodo) => {
     try {
-        // Extract year and month from periodo (format: YYYY-MM)
         const [year, month] = periodo.split('-');
         
-        // Get all attendance records for the employee in the specified month
         const startDate = `${year}-${month}-01`;
         const lastDay = new Date(year, month, 0).getDate();
         const endDate = `${year}-${month}-${lastDay}`;
@@ -108,7 +100,6 @@ const calculateOvertimeHours = async (id_empleado, periodo) => {
             }
         });
         
-        // Calculate hours worked each day
         let totalHours = 0;
         let overtimeHours = 0;
         
@@ -116,19 +107,16 @@ const calculateOvertimeHours = async (id_empleado, periodo) => {
             const entryTime = new Date(`${record.fecha}T${record.hora_entrada}`);
             const exitTime = new Date(`${record.fecha}T${record.hora_salida}`);
             
-            // Calculate hours worked in milliseconds, then convert to hours
             const hoursWorked = (exitTime - entryTime) / (1000 * 60 * 60);
             
             totalHours += hoursWorked;
             
-            // Add overtime if worked more than 8 hours in a day
             if (hoursWorked > 8) {
                 overtimeHours += (hoursWorked - 8);
             }
         });
         
-        // Check if total hours exceed 40 hours per week
-        const weeksInMonth = 4; // Approximate
+        const weeksInMonth = 4;
         const regularHoursLimit = 40 * weeksInMonth;
         
         if (totalHours > regularHoursLimit) {
@@ -142,28 +130,21 @@ const calculateOvertimeHours = async (id_empleado, periodo) => {
     }
 };
 
-// Create a new payroll
 const createNomina = async (req, res) => {
     try {
         const { id_empleado, periodo, bonificaciones = 0 } = req.body;
         
-        // Obtener información del empleado
         const empleado = await db.empleados.findByPk(id_empleado);
         
         if (!empleado) {
             return res.status(404).json({ error: 'Empleado no encontrado' });
         }
         
-        // Calcular horas extra y otros cálculos...
-        const horasExtra = 0; // Reemplazar con tu lógica existente
-        
-        // Salario base
+        const horasExtra = 0; 
         const salarioBase = empleado.salario;
         
-        // Calcular salario bruto
         const salarioBruto = salarioBase + parseFloat(bonificaciones || 0) + horasExtra;
         
-        // Obtener deducciones del empleado
         const empleadoDeducciones = await db.empleado_deducciones.findAll({
             where: { 
                 id_empleado, 
@@ -177,7 +158,6 @@ const createNomina = async (req, res) => {
         
         let totalDeducciones = 0;
         
-        // Calcular cada deducción basado en los porcentajes
         for (const empDeduccion of empleadoDeducciones) {
             const deduccion = empDeduccion.deduccion;
             
@@ -187,17 +167,14 @@ const createNomina = async (req, res) => {
             }
         }
         
-        // Si no hay deducciones personalizadas, aplicar las por defecto (RAP e IHSS)
         if (empleadoDeducciones.length === 0) {
-            const deduccionRap = salarioBruto * 0.04; // 4% para RAP
-            const deduccionIhss = salarioBruto * 0.025; // 2.5% para IHSS
+            const deduccionRap = salarioBruto * 0.04; 
+            const deduccionIhss = salarioBruto * 0.025;
             totalDeducciones = deduccionRap + deduccionIhss;
         }
         
-        // Calcular salario neto
         const salarioNeto = salarioBruto - totalDeducciones;
         
-        // Crear registro de nómina
         const nuevaNomina = await db.nominas.create({
             id_empleado,
             periodo,
@@ -205,7 +182,7 @@ const createNomina = async (req, res) => {
             horas_extra: horasExtra,
             salario_bruto: salarioBruto,
             salario_neto: salarioNeto,
-            deduccion_rap: 0, // Estos campos quedarán obsoletos pero los mantenemos por compatibilidad
+            deduccion_rap: 0, 
             deduccion_ihss: 0,
             fecha_generacion: new Date()
         });
@@ -220,9 +197,113 @@ const createNomina = async (req, res) => {
     }
 };
 
+const createBatchNominas = async (req, res) => {
+    try {
+        // Get all active employees
+        const activeEmployees = await db.empleados.findAll({
+            where: { activo: true }
+        });
+        
+        if (activeEmployees.length === 0) {
+            return res.status(404).json({ error: 'No hay empleados activos' });
+        }
+        
+        // Store created payrolls count
+        let createdCount = 0;
+        let errors = [];
+        
+        // Process each employee
+        for (const empleado of activeEmployees) {
+            try {
+                // Get the employee's latest payroll to determine next period
+                const latestPayroll = await db.nominas.findOne({
+                    where: { id_empleado: empleado.id_empleado },
+                    order: [['fecha_generacion', 'DESC']]
+                });
+                
+                // Determine period (YYYY-MM)
+                let periodo;
+                if (latestPayroll) {
+                    // Extract current period and calculate next
+                    const currentPeriod = latestPayroll.periodo;
+                    if (currentPeriod && currentPeriod.includes('-') && currentPeriod.length >= 7) {
+                        try {
+                            const [year, month] = currentPeriod.split('-').map(p => parseInt(p));
+                            if (month === 12) {
+                                periodo = `${year + 1}-01`;
+                            } else {
+                                const nextMonth = (month + 1).toString().padStart(2, '0');
+                                periodo = `${year}-${nextMonth}`;
+                            }
+                        } catch (e) {
+                            // If parsing fails, use current month
+                            const now = new Date();
+                            periodo = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+                        }
+                    } else {
+                        // Invalid format in DB, use current month
+                        const now = new Date();
+                        periodo = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+                    }
+                } else {
+                    // No previous payroll, use current month
+                    const now = new Date();
+                    periodo = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+                }
+                
+                // Calculate salary
+                const salarioBase = empleado.salario;
+                const salarioBruto = salarioBase; // No extras or bonuses in batch mode
+                
+                // Calculate deductions
+                const deduccionRap = salarioBruto * 0.04; // 4% para RAP
+                const deduccionIhss = salarioBruto * 0.025; // 2.5% para IHSS
+                const totalDeducciones = deduccionRap + deduccionIhss;
+                
+                // Calculate net salary
+                const salarioNeto = salarioBruto - totalDeducciones;
+                
+                // Create payroll
+                await db.nominas.create({
+                    id_empleado: empleado.id_empleado,
+                    periodo,
+                    bonificaciones: 0, // Default no bonuses in batch mode
+                    horas_extra: 0, // Default no overtime in batch mode
+                    salario_bruto: salarioBruto,
+                    salario_neto: salarioNeto,
+                    deduccion_rap: deduccionRap,
+                    deduccion_ihss: deduccionIhss,
+                    fecha_generacion: new Date()
+                });
+                
+                createdCount++;
+            } catch (employeeError) {
+                // Log error and continue with next employee
+                console.error(`Error creating payroll for employee ${empleado.id_empleado}:`, employeeError);
+                errors.push({
+                    id_empleado: empleado.id_empleado,
+                    error: employeeError.message
+                });
+            }
+        }
+        
+        // Return success with count
+        res.status(200).json({
+            message: `Se generaron ${createdCount} nóminas correctamente`,
+            generated: createdCount,
+            total: activeEmployees.length,
+            errors: errors.length > 0 ? errors : undefined
+        });
+    } catch (error) {
+        console.error("Error en la generación masiva de nóminas:", error);
+        res.status(500).json({ error: 'Error en el servidor' });
+    }
+};
+
 module.exports = {
     getNominas,
     getNominaById,
     getNominasByEmpleado,
-    createNomina
+    createNomina,
+    createBatchNominas
 };

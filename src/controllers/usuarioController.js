@@ -1,4 +1,3 @@
-//const { where } = require("sequelize");
 const db = require("../../models/index")
 const crypt = require("../services/userServices")
 const jwt = require('jsonwebtoken')

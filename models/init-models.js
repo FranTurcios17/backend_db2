@@ -7,6 +7,8 @@ var _incapacidades = require("./incapacidades");
 var _permisos = require("./permisos");
 var _usuarios = require("./usuarios");
 var _nominas = require("./nominas");
+var _deducciones = require("./deducciones");
+var _empleado_deducciones = require("./empleado_deducciones");
 
 function initModels(sequelize) {
   var asistencia = _asistencia(sequelize, DataTypes);
@@ -17,6 +19,8 @@ function initModels(sequelize) {
   var permisos = _permisos(sequelize, DataTypes);
   var usuarios = _usuarios(sequelize, DataTypes);
   var nominas = _nominas(sequelize, DataTypes);
+  var deducciones = _deducciones(sequelize, DataTypes);
+  var empleado_deducciones = _empleado_deducciones(sequelize, DataTypes);
 
   asistencia.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
   empleados.hasMany(asistencia, { as: "asistencia", foreignKey: "id_empleado"});
@@ -33,6 +37,13 @@ function initModels(sequelize) {
   empleados.hasOne(usuarios, { as: "usuario", foreignKey: "id_empleado"});
   usuarios.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
 
+  // Nuevas relaciones para deducciones
+  empleado_deducciones.belongsTo(empleados, { as: "empleado", foreignKey: "id_empleado"});
+  empleados.hasMany(empleado_deducciones, { as: "deducciones", foreignKey: "id_empleado"});
+  
+  empleado_deducciones.belongsTo(deducciones, { as: "deduccion", foreignKey: "id_deduccion"});
+  deducciones.hasMany(empleado_deducciones, { as: "empleados", foreignKey: "id_deduccion"});
+
   return {
     asistencia,
     empleados,
@@ -42,8 +53,11 @@ function initModels(sequelize) {
     permisos,
     usuarios,
     nominas,
+    deducciones,
+    empleado_deducciones
   };
 }
+
 module.exports = initModels;
 module.exports.initModels = initModels;
 module.exports.default = initModels;

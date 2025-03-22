@@ -31,10 +31,10 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(200),
       allowNull: true
     },
-    aprobado: {
-      type: DataTypes.BOOLEAN,
+    estado: {
+      type: DataTypes.STRING(50),
       allowNull: true,
-      defaultValue: 0
+      defaultValue: "Pendiente"
     }
   }, {
     sequelize,

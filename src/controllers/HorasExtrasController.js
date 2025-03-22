@@ -4,7 +4,6 @@ const createHoraExtra = async (req, res) => {
     try {
         const { id_empleado, fecha, horas, motivo } = req.body;
         
-        // Validate employee exists
         const empleado = await db.empleados.findByPk(id_empleado);
         if (!empleado) {
             return res.status(404).json({ error: 'El empleado no existe' });
@@ -64,7 +63,6 @@ const getHorasExtrasByEmpleado = async (req, res) => {
     try {
         const id_empleado = req.params.id;
         
-        // Validate employee exists
         const empleado = await db.empleados.findByPk(id_empleado);
         if (!empleado) {
             return res.status(404).json({ error: 'El empleado no existe' });

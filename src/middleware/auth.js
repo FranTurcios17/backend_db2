@@ -8,7 +8,7 @@ const verifyToken = (req, res, next) => {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ 
         error: 'Acceso denegado', 
-        message: 'Token de autenticación no proporcionado' 
+        message: 'Acceso denegado, no tienes autorizacion!' 
       });
     }
 

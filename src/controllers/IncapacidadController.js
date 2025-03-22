@@ -2,7 +2,7 @@ const db = require("../../models/index")
 
 const createIncapacidad = async (req, res) => {
     try {
-        const { id_empleado, tipo_incapacidad, fecha_inicio, fecha_fin, motivo, archivo_adjunto } = req.body;
+        const { id_empleado,  fecha_inicio, fecha_fin, motivo, archivo_adjunto, esatdo } = req.body;
         
         // Validate employee exists
         const empleado = await db.empleados.findByPk(id_empleado);
@@ -12,11 +12,11 @@ const createIncapacidad = async (req, res) => {
 
         const incapacidad = await db.incapacidades.create({
             id_empleado,
-            tipo_incapacidad,
             fecha_inicio,
             fecha_fin,
             motivo,
-            archivo_adjunto
+            archivo_adjunto,
+            estado
         });
 
         res.status(201).json({

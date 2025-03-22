@@ -2,7 +2,7 @@ const db = require("../../models/index")
 
 const createPermiso = async (req, res) => {
     try {
-        const { id_empleado, tipo_permiso, fecha_inicio, fecha_fin, motivo } = req.body;
+        const { id_empleado, tipo_permiso, fecha_inicio, fecha_fin, motivo, estado } = req.body;
         
         // Validate employee exists
         const empleado = await db.empleados.findByPk(id_empleado);
@@ -16,7 +16,7 @@ const createPermiso = async (req, res) => {
             fecha_inicio,
             fecha_fin,
             motivo,
-            aprobado: false
+            estado
         });
 
         res.status(201).json({
@@ -112,7 +112,7 @@ const aprobarPermiso = async (req, res) => {
             return res.status(404).json({ error: 'El permiso no existe' });
         }
 
-        await permiso.update({ aprobado: true });
+        await permiso.update({ estado: "Aprobado" });
         
         res.status(200).json({
             message: "Permiso aprobado con éxito",
@@ -133,7 +133,7 @@ const rechazarPermiso = async (req, res) => {
             return res.status(404).json({ error: 'El permiso no existe' });
         }
 
-        await permiso.update({ aprobado: false });
+        await permiso.update({ estado: "Rechazado" });
         
         res.status(200).json({
             message: "Permiso rechazado",

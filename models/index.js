@@ -6,25 +6,23 @@ const Sequelize = require('sequelize');
 const process = require('process');
 const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
-const config = require(__dirname + '/../config/config.json')[env];
+const config = require('../config/config')[env] || {};
 const db = {};
 
-require('dotenv').config()
-
-
+require('dotenv').config();
 
 const initModels = require("./init-models");
 
 const sequelize = new Sequelize(
-  process.env.DBNAME,
-  process.env.USER,
-  process.env.PASSWORD,
+  process.env.DB_NAME || process.env.DBNAME || config.database || 'database_development',
+  process.env.DB_USER || process.env.USER || config.username || 'root',
+  process.env.DB_PASSWORD || process.env.PASSWORD || config.password || null,
   {
-    host: process.env.HOST, 
-    port: 3306, 
-    dialect: "mysql"
-  } 
-)
+    host: process.env.DB_HOST || process.env.HOST || config.host || '127.0.0.1',
+    port: Number(process.env.DB_PORT || config.port || 3306),
+    dialect: process.env.DB_DIALECT || config.dialect || 'mysql',
+  }
+);
 
 
 //db.sequelize = sequelize;
